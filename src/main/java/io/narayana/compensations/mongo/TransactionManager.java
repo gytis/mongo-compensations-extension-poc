@@ -11,7 +11,7 @@ public interface TransactionManager {
 
     void cancel() throws WrongStateException, SystemException;
 
-    void register(ConfirmationAction confirmationAction, CompensationAction compensationAction);
+    void register(ConfirmationAction confirmationAction, CompensationAction compensationAction) throws WrongStateException, SystemException;
 
     Object getTxData();
 
