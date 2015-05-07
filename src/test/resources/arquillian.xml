@@ -1,0 +1,17 @@
+<arquillian xmlns="http://jboss.org/schema/arquillian" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://jboss.org/schema/arquillian
+        http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+    <engine>
+        <property name="deploymentExportPath">target/</property>
+    </engine>
+
+    <container qualifier="wildfly" default="true">
+        <configuration>
+            <property name="serverConfig">${server.config:standalone.xml}</property>
+            <property name="javaVmArguments">${server.jvm.args:}</property>
+            <property name="managementAddress">${node.address:127.0.0.1}</property>
+        </configuration>
+    </container>
+
+</arquillian>
