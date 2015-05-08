@@ -73,32 +73,28 @@ public class TransactionManagerImplIntegrationTest {
     public void shouldBeginAndCloseTheTransaction() throws WrongStateException, SystemException {
         LOGGER.info(getClass().getSimpleName() + "shouldBeginAndCloseTheTransaction starting");
 
-        final DummyConfirmationAction confirmationAction = new DummyConfirmationAction(new DummyState("initial"));
-        final DummyCompensationAction compensationAction = new DummyCompensationAction(new DummyState("initial"));
-
-        transactionManager.begin();
-        transactionManager.register(confirmationAction, compensationAction);
-        transactionManager.close();
-
-        assertTransaction(true, confirmationAction, compensationAction);
+        executeTest(true);
     }
 
     @Test
     public void shouldBeginAndCancelTheTransaction() throws WrongStateException, SystemException {
         LOGGER.info(getClass().getSimpleName() + "shouldBeginAndCancelTheTransaction starting");
 
+        executeTest(false);
+    }
+
+    private void executeTest(final boolean success) throws WrongStateException, SystemException {
         final DummyConfirmationAction confirmationAction = new DummyConfirmationAction(new DummyState("initial"));
         final DummyCompensationAction compensationAction = new DummyCompensationAction(new DummyState("initial"));
 
         transactionManager.begin();
         transactionManager.register(confirmationAction, compensationAction);
-        transactionManager.cancel();
 
-        assertTransaction(false, confirmationAction, compensationAction);
-    }
-
-    private void assertTransaction(final boolean success, final DummyConfirmationAction confirmationAction,
-            final DummyCompensationAction compensationAction) {
+        if (success) {
+            transactionManager.close();
+        } else {
+            transactionManager.cancel();
+        }
 
         Assert.assertEquals(success ? 1 : 0, DummyConfirmationAction.INVOCATIONS_COUNTER);
         Assert.assertEquals(success ? 0 : 1, DummyCompensationAction.INVOCATIONS_COUNTER);
