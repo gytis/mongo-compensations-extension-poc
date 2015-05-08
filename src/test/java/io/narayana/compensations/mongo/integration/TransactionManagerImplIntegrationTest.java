@@ -1,12 +1,11 @@
 package io.narayana.compensations.mongo.integration;
 
-import io.narayana.compensations.mongo.CompensationAction;
-import io.narayana.compensations.mongo.ConfirmationAction;
 import io.narayana.compensations.mongo.SystemException;
 import io.narayana.compensations.mongo.TransactionManager;
 import io.narayana.compensations.mongo.WrongStateException;
 import io.narayana.compensations.mongo.common.DummyCompensationAction;
 import io.narayana.compensations.mongo.common.DummyConfirmationAction;
+import io.narayana.compensations.mongo.common.DummyState;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.logging.Logger;
@@ -78,36 +77,38 @@ public class TransactionManagerImplIntegrationTest {
     @Test
     public void shouldBeginAndCloseTheTransaction() throws WrongStateException, SystemException {
         LOGGER.info(getClass().getSimpleName() + "shouldBeginAndCloseTheTransaction starting");
-        final DummyConfirmationAction confirmationAction = new DummyConfirmationAction();
-        final DummyCompensationAction compensationAction = new DummyCompensationAction();
 
+        final DummyConfirmationAction confirmationAction = new DummyConfirmationAction(new DummyState("initial"));
+        final DummyCompensationAction compensationAction = new DummyCompensationAction(new DummyState("initial"));
 
         transactionManager.begin();
-        Assert.assertTrue("Transaction should have been started", baController.isBARunning());
-
         transactionManager.register(confirmationAction, compensationAction);
-
         transactionManager.close();
-        Assert.assertFalse("Transaction should have been stopped", baController.isBARunning());
-        Assert.assertEquals(1, DummyConfirmationAction.INVOCATIONS_COUNTER);
-        Assert.assertEquals(0, DummyCompensationAction.INVOCATIONS_COUNTER);
+
+        assertTransaction(true, confirmationAction, compensationAction);
     }
 
     @Test
     public void shouldBeginAndCancelTheTransaction() throws WrongStateException, SystemException {
         LOGGER.info(getClass().getSimpleName() + "shouldBeginAndCancelTheTransaction starting");
-        final ConfirmationAction confirmationAction = new DummyConfirmationAction();
-        final CompensationAction compensationAction = new DummyCompensationAction();
+
+        final DummyConfirmationAction confirmationAction = new DummyConfirmationAction(new DummyState("initial"));
+        final DummyCompensationAction compensationAction = new DummyCompensationAction(new DummyState("initial"));
 
         transactionManager.begin();
-        Assert.assertTrue("Transaction should have been started", baController.isBARunning());
-
         transactionManager.register(confirmationAction, compensationAction);
-
         transactionManager.cancel();
-        Assert.assertFalse("Transaction should have been stopped", baController.isBARunning());
-        Assert.assertEquals(0, DummyConfirmationAction.INVOCATIONS_COUNTER);
-        Assert.assertEquals(1, DummyCompensationAction.INVOCATIONS_COUNTER);
+
+        assertTransaction(false, confirmationAction, compensationAction);
+    }
+
+    private void assertTransaction(final boolean success, final DummyConfirmationAction confirmationAction,
+            final DummyCompensationAction compensationAction) {
+
+        Assert.assertEquals(success ? 1 : 0, DummyConfirmationAction.INVOCATIONS_COUNTER);
+        Assert.assertEquals(success ? 0 : 1, DummyCompensationAction.INVOCATIONS_COUNTER);
+        Assert.assertEquals(success ? "confirmed" : "initial", confirmationAction.getState().getValue());
+        Assert.assertEquals(success ? "initial" : "compensated", compensationAction.getState().getValue());
     }
 
 }

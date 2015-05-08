@@ -7,10 +7,10 @@ import java.io.Serializable;
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-public interface CompensationAction extends CompensationHandler, Serializable {
+public interface CompensationAction<T extends State> extends CompensationHandler, Serializable {
 
-    Object getState();
+    T getState();
 
-    void setState(Object state);
+    void setState(T state);
 
 }

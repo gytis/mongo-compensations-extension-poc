@@ -7,10 +7,10 @@ import java.io.Serializable;
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-public interface ConfirmationAction extends ConfirmationHandler, Serializable {
+public interface ConfirmationAction<T extends State> extends ConfirmationHandler, Serializable {
 
-    Object getState();
+    T getState();
 
-    void setState(Object state);
+    void setState(T state);
 
 }
