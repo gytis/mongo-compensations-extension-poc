@@ -19,6 +19,7 @@
         <version.junit>4.11</version.junit>
         <version.org.wildfly.arquillian>1.0.0.Alpha5</version.org.wildfly.arquillian>
         <version.org.jboss.arquillian.junit>1.1.4.Final</version.org.jboss.arquillian.junit>
+        <version.org.jboss.shrinkwrap.resolver>2.1.1</version.org.jboss.shrinkwrap.resolver>
         <version.surefire>2.17</version.surefire>
         <jvm.args.debug></jvm.args.debug>
     </properties>
@@ -36,6 +37,7 @@
                         <server.jvm.args>${jvm.args.debug}</server.jvm.args>
                         <node.address>127.0.0.1</node.address>
                         <server.config>standalone.xml</server.config>
+                        <version.org.mongodb>${version.org.mongodb}</version.org.mongodb>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -74,6 +76,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>${version.org.mongodb}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${version.junit}</version>
@@ -89,6 +97,12 @@
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
             <version>${version.org.wildfly.arquillian}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+            <version>${version.org.jboss.shrinkwrap.resolver}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
