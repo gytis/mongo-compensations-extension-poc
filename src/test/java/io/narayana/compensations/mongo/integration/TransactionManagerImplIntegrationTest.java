@@ -3,17 +3,15 @@ package io.narayana.compensations.mongo.integration;
 import io.narayana.compensations.mongo.SystemException;
 import io.narayana.compensations.mongo.TransactionManager;
 import io.narayana.compensations.mongo.WrongStateException;
-import io.narayana.compensations.mongo.common.DummyCompensationAction;
-import io.narayana.compensations.mongo.common.DummyConfirmationAction;
-import io.narayana.compensations.mongo.common.DummyState;
+import io.narayana.compensations.mongo.common.DeploymentHelper;
+import io.narayana.compensations.mongo.dummy.DummyCompensationAction;
+import io.narayana.compensations.mongo.dummy.DummyConfirmationAction;
+import io.narayana.compensations.mongo.dummy.DummyState;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.logging.Logger;
 import org.jboss.narayana.compensations.impl.BAControler;
 import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
 import org.junit.Assert;
@@ -39,13 +37,10 @@ public class TransactionManagerImplIntegrationTest {
 
     @Deployment
     public static Archive<?> getDeployment() {
-        final String manifestDependencies = "Dependencies: org.jboss.narayana.compensations, org.jboss.xts\n";
-
-        final JavaArchive archive = ShrinkWrap.create(JavaArchive.class)
-                .addPackages(true, TransactionManager.class.getPackage())
-                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
-                .addAsManifestResource("services/javax.enterprise.inject.spi.Extension")
-                .addAsManifestResource(new StringAsset(manifestDependencies), "MANIFEST.MF");
+        final JavaArchive archive = DeploymentHelper.getJavaArchive()
+                .addClasses(DeploymentHelper.getBaseClasses())
+                .addClasses(DeploymentHelper.getDummyTestClasses())
+                .addClass(TransactionManagerImplIntegrationTest.class);
 
         System.out.println("Deploying test archive: " + archive.toString(true));
 

@@ -1,17 +1,17 @@
-package io.narayana.compensations.mongo.common;
+package io.narayana.compensations.mongo.dummy;
 
-import io.narayana.compensations.mongo.CompensationAction;
+import io.narayana.compensations.mongo.ConfirmationAction;
 
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-public class DummyCompensationAction implements CompensationAction<DummyState> {
+public class DummyConfirmationAction implements ConfirmationAction<DummyState> {
 
     public static int INVOCATIONS_COUNTER = 0;
 
     private DummyState state;
 
-    public DummyCompensationAction(DummyState state) {
+    public DummyConfirmationAction(DummyState state) {
         this.state = state;
     }
 
@@ -23,8 +23,8 @@ public class DummyCompensationAction implements CompensationAction<DummyState> {
         this.state = state;
     }
 
-    public void compensate() {
+    public void confirm() {
         INVOCATIONS_COUNTER++;
-        state = new DummyState("compensated");
+        state = new DummyState("confirmed");
     }
 }

@@ -1,4 +1,4 @@
-package io.narayana.compensations.mongo.common;
+package io.narayana.compensations.mongo.dummy;
 
 import io.narayana.compensations.mongo.State;
 
