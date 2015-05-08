@@ -7,13 +7,15 @@ import io.narayana.compensations.mongo.State;
 import io.narayana.compensations.mongo.SystemException;
 import io.narayana.compensations.mongo.TransactionManager;
 import io.narayana.compensations.mongo.WrongStateException;
-import io.narayana.compensations.mongo.db.MongoInsertCompensationAction;
-import io.narayana.compensations.mongo.db.MongoInsertConfirmationAction;
-import io.narayana.compensations.mongo.db.MongoInsertState;
+import io.narayana.compensations.mongo.db.TestMongoInsertCompensationAction;
+import io.narayana.compensations.mongo.db.TestMongoInsertConfirmationAction;
+import io.narayana.compensations.mongo.db.TestMongoInsertState;
 import io.narayana.compensations.mongo.dummy.DummyCompensationAction;
 import io.narayana.compensations.mongo.dummy.DummyConfirmationAction;
 import io.narayana.compensations.mongo.dummy.DummyState;
 import io.narayana.compensations.mongo.internal.MongoCollectionImpl;
+import io.narayana.compensations.mongo.internal.MongoInsertConfirmationAction;
+import io.narayana.compensations.mongo.internal.MongoInsertState;
 import io.narayana.compensations.mongo.internal.ParticipantImple;
 import io.narayana.compensations.mongo.internal.TransactionManagerImpl;
 import io.narayana.compensations.mongo.utils.BAControlerProducer;
@@ -70,6 +72,8 @@ public class DeploymentHelper {
 
         classes.add(MongoCollectionConfiguration.class);
         classes.add(MongoCollectionImpl.class);
+        classes.add(MongoInsertConfirmationAction.class);
+        classes.add(MongoInsertState.class);
         classes.add(MongoCollectionProducer.class);
 
         return classes.toArray(new Class[classes.size()]);
@@ -85,9 +89,9 @@ public class DeploymentHelper {
 
     public static Class[] getDbTestClasses() {
         return new Class[] {
-                MongoInsertCompensationAction.class,
-                MongoInsertConfirmationAction.class,
-                MongoInsertState.class
+                TestMongoInsertCompensationAction.class,
+                TestMongoInsertConfirmationAction.class,
+                TestMongoInsertState.class
         };
     }
 

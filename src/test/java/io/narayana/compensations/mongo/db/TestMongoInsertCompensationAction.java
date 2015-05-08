@@ -6,26 +6,26 @@ import io.narayana.compensations.mongo.CompensationAction;
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-public class MongoInsertCompensationAction implements CompensationAction<MongoInsertState> {
+public class TestMongoInsertCompensationAction implements CompensationAction<TestMongoInsertState> {
 
     public static int INVOCATIONS_COUNTER = 0;
 
     private final MongoCollection collection;
 
-    private MongoInsertState state;
+    private TestMongoInsertState state;
 
-    public MongoInsertCompensationAction(MongoInsertState state, MongoCollection collection) {
+    public TestMongoInsertCompensationAction(TestMongoInsertState state, MongoCollection collection) {
         this.state = state;
 
         // TODO normally collection should be injected
         this.collection = collection;
     }
 
-    public MongoInsertState getState() {
+    public TestMongoInsertState getState() {
         return state;
     }
 
-    public void setState(MongoInsertState state) {
+    public void setState(TestMongoInsertState state) {
         this.state = state;
     }
 

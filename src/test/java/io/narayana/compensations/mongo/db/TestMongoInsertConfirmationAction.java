@@ -5,21 +5,21 @@ import io.narayana.compensations.mongo.ConfirmationAction;
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-public class MongoInsertConfirmationAction implements ConfirmationAction<MongoInsertState> {
+public class TestMongoInsertConfirmationAction implements ConfirmationAction<TestMongoInsertState> {
 
     public static int INVOCATIONS_COUNTER = 0;
 
-    private MongoInsertState state;
+    private TestMongoInsertState state;
 
-    public MongoInsertConfirmationAction(MongoInsertState state) {
+    public TestMongoInsertConfirmationAction(TestMongoInsertState state) {
         this.state = state;
     }
 
-    public MongoInsertState getState() {
+    public TestMongoInsertState getState() {
         return state;
     }
 
-    public void setState(MongoInsertState state) {
+    public void setState(TestMongoInsertState state) {
         this.state = state;
     }
 

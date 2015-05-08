@@ -21,20 +21,30 @@ import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import io.narayana.compensations.mongo.SystemException;
+import io.narayana.compensations.mongo.TransactionManager;
+import io.narayana.compensations.mongo.WrongStateException;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.jboss.logging.Logger;
 
+import javax.inject.Inject;
 import java.util.List;
 
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements MongoCollection {
+public class MongoCollectionImpl implements MongoCollection<Document> {
 
-    private MongoCollection delegate;
+    private static final Logger LOGGER = Logger.getLogger(MongoCollectionImpl.class);
 
-    public void setDelegate(final MongoCollection delegate) {
+    @Inject
+    private TransactionManager transactionManager;
+
+    private MongoCollection<Document> delegate;
+
+    public void setDelegate(final MongoCollection<Document> delegate) {
         this.delegate = delegate;
     }
 
@@ -42,7 +52,7 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.getNamespace();
     }
 
-    public Class getDocumentClass() {
+    public Class<Document> getDocumentClass() {
         return delegate.getDocumentClass();
     }
 
@@ -58,7 +68,7 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.getWriteConcern();
     }
 
-    public MongoCollection<NewTDocument> withDocumentClass(Class aClass) {
+    public MongoCollection<Document> withDocumentClass(Class aClass) {
         return null;
     }
 
@@ -86,7 +96,7 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.count(bson, countOptions);
     }
 
-    public DistinctIterable<TResult> distinct(String s, Class aClass) {
+    public DistinctIterable<Document> distinct(String s, Class aClass) {
         return null;
     }
 
@@ -94,7 +104,7 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.find();
     }
 
-    public FindIterable<TResult> find(Class aClass) {
+    public FindIterable<Document> find(Class aClass) {
         return null;
     }
 
@@ -102,11 +112,11 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.find(bson);
     }
 
-    public AggregateIterable<TResult> aggregate(List list, Class aClass) {
+    public AggregateIterable<Document> aggregate(List list, Class aClass) {
         return null;
     }
 
-    public FindIterable<TResult> find(Bson bson, Class aClass) {
+    public FindIterable<Document> find(Bson bson, Class aClass) {
         return null;
     }
 
@@ -118,7 +128,7 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.mapReduce(s, s1);
     }
 
-    public MapReduceIterable<TResult> mapReduce(String s, String s1, Class aClass) {
+    public MapReduceIterable<Document> mapReduce(String s, String s1, Class aClass) {
         return null;
     }
 
@@ -130,8 +140,10 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.bulkWrite(list, bulkWriteOptions);
     }
 
-    public void insertOne(Object o) {
-        delegate.insertOne(o);
+    public void insertOne(Document document) {
+        document = appendInsertTxData(document);
+
+        delegate.insertOne(document);
     }
 
     public void insertMany(List list) {
@@ -150,11 +162,11 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.deleteMany(bson);
     }
 
-    public UpdateResult replaceOne(Bson bson, Object o) {
+    public UpdateResult replaceOne(Bson bson, Document o) {
         return delegate.replaceOne(bson, o);
     }
 
-    public UpdateResult replaceOne(Bson bson, Object o, UpdateOptions updateOptions) {
+    public UpdateResult replaceOne(Bson bson, Document o, UpdateOptions updateOptions) {
         return delegate.replaceOne(bson, o, updateOptions);
     }
 
@@ -174,27 +186,27 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.updateMany(bson, bson1, updateOptions);
     }
 
-    public Object findOneAndDelete(Bson bson) {
+    public Document findOneAndDelete(Bson bson) {
         return delegate.findOneAndDelete(bson);
     }
 
-    public Object findOneAndDelete(Bson bson, FindOneAndDeleteOptions findOneAndDeleteOptions) {
+    public Document findOneAndDelete(Bson bson, FindOneAndDeleteOptions findOneAndDeleteOptions) {
         return delegate.findOneAndDelete(bson, findOneAndDeleteOptions);
     }
 
-    public Object findOneAndReplace(Bson bson, Object o) {
+    public Document findOneAndReplace(Bson bson, Document o) {
         return delegate.findOneAndReplace(bson, o);
     }
 
-    public Object findOneAndReplace(Bson bson, Object o, FindOneAndReplaceOptions findOneAndReplaceOptions) {
+    public Document findOneAndReplace(Bson bson, Document o, FindOneAndReplaceOptions findOneAndReplaceOptions) {
         return delegate.findOneAndReplace(bson, o, findOneAndReplaceOptions);
     }
 
-    public Object findOneAndUpdate(Bson bson, Bson bson1) {
+    public Document findOneAndUpdate(Bson bson, Bson bson1) {
         return delegate.findOneAndUpdate(bson, bson1);
     }
 
-    public Object findOneAndUpdate(Bson bson, Bson bson1, FindOneAndUpdateOptions findOneAndUpdateOptions) {
+    public Document findOneAndUpdate(Bson bson, Bson bson1, FindOneAndUpdateOptions findOneAndUpdateOptions) {
         return delegate.findOneAndUpdate(bson, bson1, findOneAndUpdateOptions);
     }
 
@@ -218,7 +230,7 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
         return delegate.listIndexes();
     }
 
-    public ListIndexesIterable<TResult> listIndexes(Class aClass) {
+    public ListIndexesIterable<Document> listIndexes(Class aClass) {
         return null;
     }
 
@@ -240,5 +252,25 @@ public class MongoCollectionImpl<TDocument, TResult, NewTDocument> implements Mo
 
     public void renameCollection(MongoNamespace mongoNamespace, RenameCollectionOptions renameCollectionOptions) {
         delegate.renameCollection(mongoNamespace, renameCollectionOptions);
+    }
+
+    private Document appendInsertTxData(final Document document) {
+        final Document copy = new Document(document);
+
+        try {
+            final Object txData = transactionManager.getTxData();
+            if (txData != null) {
+                copy.put("txData", txData.toString());
+                final MongoInsertState state = new MongoInsertState(copy);
+                final MongoInsertConfirmationAction confirmationAction = new MongoInsertConfirmationAction(state, delegate);
+                transactionManager.register(confirmationAction, null);
+            }
+        } catch (final SystemException e) {
+            LOGGER.warn(e.getMessage());
+        } catch (final WrongStateException e) {
+            LOGGER.warn(e.getMessage());
+        }
+
+        return copy;
     }
 }

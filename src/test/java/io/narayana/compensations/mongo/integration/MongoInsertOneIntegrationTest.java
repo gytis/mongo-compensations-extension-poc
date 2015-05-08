@@ -6,11 +6,10 @@ import io.narayana.compensations.mongo.SystemException;
 import io.narayana.compensations.mongo.TransactionManager;
 import io.narayana.compensations.mongo.WrongStateException;
 import io.narayana.compensations.mongo.common.DeploymentHelper;
-import io.narayana.compensations.mongo.db.MongoInsertCompensationAction;
-import io.narayana.compensations.mongo.db.MongoInsertConfirmationAction;
-import io.narayana.compensations.mongo.db.MongoInsertState;
+import io.narayana.compensations.mongo.db.TestMongoInsertCompensationAction;
+import io.narayana.compensations.mongo.db.TestMongoInsertConfirmationAction;
+import io.narayana.compensations.mongo.db.TestMongoInsertState;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.logging.Logger;
@@ -36,7 +35,7 @@ public class MongoInsertOneIntegrationTest {
 
     @Inject
     @MongoCollectionConfiguration(databaseName = "test-database", collectionName = "test-collection")
-    private MongoCollection collection;
+    private MongoCollection<Document> collection;
 
     @Inject
     private TransactionManager transactionManager;
@@ -64,8 +63,8 @@ public class MongoInsertOneIntegrationTest {
         Assert.assertNotNull("BA controller was not injected", baController);
         Assert.assertFalse("Transaction should not be running before the test", baController.isBARunning());
 
-        MongoInsertConfirmationAction.INVOCATIONS_COUNTER = 0;
-        MongoInsertCompensationAction.INVOCATIONS_COUNTER = 0;
+        TestMongoInsertConfirmationAction.INVOCATIONS_COUNTER = 0;
+        TestMongoInsertCompensationAction.INVOCATIONS_COUNTER = 0;
     }
 
     @After
@@ -97,13 +96,16 @@ public class MongoInsertOneIntegrationTest {
     }
 
     private void executeTest(final boolean success) throws WrongStateException, SystemException {
-        final MongoInsertState state = new MongoInsertState(new Document("value", UUID.randomUUID()));
-        final MongoInsertConfirmationAction confirmationAction = new MongoInsertConfirmationAction(state);
-        final MongoInsertCompensationAction compensationAction = new MongoInsertCompensationAction(state, collection);
+        final TestMongoInsertState state = new TestMongoInsertState(new Document("value", UUID.randomUUID()));
+        final TestMongoInsertConfirmationAction confirmationAction = new TestMongoInsertConfirmationAction(state);
+        final TestMongoInsertCompensationAction compensationAction = new TestMongoInsertCompensationAction(state, collection);
 
         transactionManager.begin();
         transactionManager.register(confirmationAction, compensationAction);
         collection.insertOne(state.getValue());
+
+        Document document = collection.find(state.getValue()).first();
+        Assert.assertEquals(transactionManager.getTxData(), document.get("txData"));
 
         if (success) {
             transactionManager.close();
@@ -111,16 +113,21 @@ public class MongoInsertOneIntegrationTest {
             transactionManager.cancel();
         }
 
-        Assert.assertEquals(success ? 1 : 0, MongoInsertConfirmationAction.INVOCATIONS_COUNTER);
-        Assert.assertEquals(success ? 0 : 1, MongoInsertCompensationAction.INVOCATIONS_COUNTER);
-        Assert.assertEquals(success, collection.find(state.getValue()).iterator().hasNext());
+        Assert.assertEquals(success ? 1 : 0, TestMongoInsertConfirmationAction.INVOCATIONS_COUNTER);
+        Assert.assertEquals(success ? 0 : 1, TestMongoInsertCompensationAction.INVOCATIONS_COUNTER);
+
+        document = collection.find(state.getValue()).first();
+        if (success) {
+            Assert.assertNotNull("Document should exist", document);
+            Assert.assertNull("TxData should not be available", document.get("txData"));
+        } else {
+            Assert.assertNull("Document should not exist", document);
+        }
     }
 
     private void cleanCollection() {
-        for (final Object document : collection.find()) {
-            if (document instanceof Bson) {
-                collection.deleteOne((Bson) document);
-            }
+        for (final Document document : collection.find()) {
+            collection.deleteOne(document);
         }
     }
 }

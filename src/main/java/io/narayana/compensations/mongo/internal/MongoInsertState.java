@@ -1,4 +1,4 @@
-package io.narayana.compensations.mongo.db;
+package io.narayana.compensations.mongo.internal;
 
 import io.narayana.compensations.mongo.State;
 import org.bson.Document;

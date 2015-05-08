@@ -4,6 +4,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import io.narayana.compensations.mongo.MongoCollectionConfiguration;
 import io.narayana.compensations.mongo.internal.MongoCollectionImpl;
+import org.bson.Document;
 
 import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
@@ -18,7 +19,7 @@ public class MongoCollectionProducer {
 
     @Produces
     @MongoCollectionConfiguration(collectionName = "", databaseName = "")
-    public MongoCollection produceMongoCollection(final InjectionPoint injectionPoint,
+    public MongoCollection<Document> produceMongoCollection(final InjectionPoint injectionPoint,
             @New MongoCollectionImpl collection) {
 
         if (mongoClient == null) {
@@ -28,7 +29,7 @@ public class MongoCollectionProducer {
         final MongoCollectionConfiguration configuration =
                 injectionPoint.getAnnotated().getAnnotation(MongoCollectionConfiguration.class);
 
-        final MongoCollection delegate =
+        final MongoCollection<Document> delegate =
                 mongoClient.getDatabase(configuration.databaseName()).getCollection(configuration.collectionName());
 
         collection.setDelegate(delegate);
