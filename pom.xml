@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <version.org.jboss.narayana.compensations>5.0.4.Final</version.org.jboss.narayana.compensations>
+        <version.org.jboss.narayana>5.0.4.Final</version.org.jboss.narayana>
         <version.org.mongodb>3.0.1</version.org.mongodb>
         <version.org.wildfly>9.0.0.CR1</version.org.wildfly>
         <version.org.wildfly.plugins>1.0.2.Final</version.org.wildfly.plugins>
@@ -46,7 +46,19 @@
         <dependency>
             <groupId>org.jboss.narayana.compensations</groupId>
             <artifactId>compensations</artifactId>
-            <version>${version.org.jboss.narayana.compensations}</version>
+            <version>${version.org.jboss.narayana}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.narayana.xts</groupId>
+            <artifactId>jbossxts</artifactId>
+            <version>${version.org.jboss.narayana}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.narayana.arjunacore</groupId>
+            <artifactId>arjunacore</artifactId>
+            <version>${version.org.jboss.narayana}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

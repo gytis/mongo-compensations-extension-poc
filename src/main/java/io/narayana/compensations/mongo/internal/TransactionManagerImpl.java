@@ -1,20 +1,21 @@
 package io.narayana.compensations.mongo.internal;
 
+import com.arjuna.mw.wscf.model.sagas.api.CoordinatorManager;
+import com.arjuna.mw.wscf.model.sagas.participants.Participant;
+import com.arjuna.mw.wscf11.model.sagas.CoordinatorManagerFactory;
 import io.narayana.compensations.mongo.CompensationAction;
 import io.narayana.compensations.mongo.ConfirmationAction;
 import io.narayana.compensations.mongo.SystemException;
 import io.narayana.compensations.mongo.TransactionManager;
 import io.narayana.compensations.mongo.WrongStateException;
 import org.jboss.logging.Logger;
-import org.jboss.narayana.compensations.api.CompensationHandler;
 import org.jboss.narayana.compensations.api.CompensationManager;
-import org.jboss.narayana.compensations.api.ConfirmationHandler;
 import org.jboss.narayana.compensations.impl.BAControler;
-import org.jboss.narayana.compensations.impl.ParticipantManager;
 
 import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import java.util.Stack;
+import java.util.UUID;
 
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
@@ -25,9 +26,9 @@ public class TransactionManagerImpl implements TransactionManager {
     private static final Logger LOGGER = Logger.getLogger(TransactionManagerImpl.class);
 
     /**
-     * TODO this is just a demonstration. Such list wouldn't work in highly concurrent environment.
+     * TODO such list would not work in concurent environment
      */
-    private static final Stack<ParticipantManager> participantManagers = new Stack<ParticipantManager>();
+    private static final Stack<Participant> PARTICIPANTS = new Stack<Participant>();
 
     @Inject
     private CompensationManager compensationManager;
@@ -49,7 +50,7 @@ public class TransactionManagerImpl implements TransactionManager {
             throw new WrongStateException("Transaction is already running");
         }
 
-        participantManagers.clear();
+        PARTICIPANTS.clear();
 
         try {
             baController.beginBusinessActivity();
@@ -109,16 +110,27 @@ public class TransactionManagerImpl implements TransactionManager {
         }
 
         try {
-            enlist(confirmationAction);
-            enlist(compensationAction);
+            enlist(confirmationAction, compensationAction);
         } catch (final Exception e) {
             compensationManager.setCompensateOnly();
             throw new SystemException(e.getMessage(), e);
         }
     }
 
-    public Object getTxData() {
-        return null;
+    /**
+     * TODO what should be returned? As participant number will increase during the transaction, returning them would
+     * be inconsistent. For now, will return current transaction.
+     *
+     *
+     * @throws SystemException if current transaction cannot be returned
+     * @return Current transaction
+     */
+    public Object getTxData() throws SystemException {
+        try {
+            return baController.getCurrentTransaction();
+        } catch (Exception e) {
+            throw new SystemException(e.getMessage(), e);
+        }
     }
 
     private void saveState() {
@@ -129,25 +141,36 @@ public class TransactionManagerImpl implements TransactionManager {
 
     }
 
-    private void enlist(final Object handler) throws Exception {
-        final ParticipantManager participantManager;
+    private void enlist(final ConfirmationAction confirmationAction, final CompensationAction compensationAction)
+            throws SystemException {
 
-        if (handler instanceof CompensationHandler) {
-            participantManager = baController.enlist(((CompensationHandler) handler).getClass(), null, null);
-        } else if (handler instanceof  ConfirmationAction) {
-            participantManager = baController.enlist(null, ((ConfirmationHandler) handler).getClass(), null);
-        } else {
-            return;
+        final String participantId = String.valueOf(UUID.randomUUID());
+        final Participant participant = new ParticipantImple(participantId, confirmationAction, compensationAction);
+
+        try {
+            CoordinatorManagerFactory.coordinatorManager().enlistParticipant(participant);
+        } catch (final Exception e) {
+            throw new SystemException(e.getMessage(), e);
         }
 
-        participantManagers.push(participantManager);
+        PARTICIPANTS.push(participant);
     }
 
-    private void closeAllParticipants() {
-        while (!participantManagers.empty()) {
-            final ParticipantManager participantManager = participantManagers.pop();
+    private void closeAllParticipants() throws SystemException {
+        final CoordinatorManager coordinatorManager;
+
+        try {
+            coordinatorManager = CoordinatorManagerFactory.coordinatorManager();
+        } catch (final Exception e) {
+            compensationManager.setCompensateOnly();
+            throw new SystemException(e.getMessage(), e);
+        }
+
+        while (!PARTICIPANTS.empty()) {
+            final Participant participant = PARTICIPANTS.pop();
+
             try {
-                participantManager.completed();
+                coordinatorManager.participantCompleted(participant.id());
             } catch (final Exception e) {
                 compensationManager.setCompensateOnly();
             }

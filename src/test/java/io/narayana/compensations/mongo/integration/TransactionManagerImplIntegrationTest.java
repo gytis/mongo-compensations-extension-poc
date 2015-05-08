@@ -40,7 +40,7 @@ public class TransactionManagerImplIntegrationTest {
 
     @Deployment
     public static Archive<?> getDeployment() {
-        final String manifestDependencies = "Dependencies: org.jboss.narayana.compensations\n";
+        final String manifestDependencies = "Dependencies: org.jboss.narayana.compensations, org.jboss.xts\n";
 
         final JavaArchive archive = ShrinkWrap.create(JavaArchive.class)
                 .addPackages(true, TransactionManager.class.getPackage())

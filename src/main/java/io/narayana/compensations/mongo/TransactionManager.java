@@ -13,6 +13,6 @@ public interface TransactionManager {
 
     void register(ConfirmationAction confirmationAction, CompensationAction compensationAction) throws WrongStateException, SystemException;
 
-    Object getTxData();
+    Object getTxData() throws SystemException;
 
 }
